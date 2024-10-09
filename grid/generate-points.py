@@ -8,13 +8,13 @@ class GeneratePoints:
             
         else:
             f = open("points.txt",'w')
-        for i in range(10):
+        for i in range(40):
             x,y = self.generateRandomCoordinates()
             f.write(f"{x},{y}\n")   
         f.close()
     def generateRandomCoordinates(self):
-        x = random.uniform(0,10.93)
-        y = random.uniform(0,10.93)
+        x = random.uniform(0,5.93)
+        y = random.uniform(0,5.93)
         return x,y    
 
             
