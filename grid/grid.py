@@ -1,102 +1,131 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-
+import pandas as pd
+import math
 # Define MBR, Cell, and Grid classes as per the corrected code
 class MBR:
+    mbrs = []
     def __init__(self, xmax, xmin, ymax, ymin):
         self.xmax = xmax
         self.xmin = xmin
         self.ymax = ymax
         self.ymin = ymin
+        MBR.mbrs.append(self)
+        
+        
 class Geometry:
+    all = []
     def __init__(self,x,y):
         self.x=x
         self.y=y
+        Geometry.all.append(self)
+        
     def print(self):
         print('x:',self.x, ' y: ',self.y)
     
+    def getGeometry(self):
+        return self.x,self.y
+    
+    
+    
 class Cell:
+    cells =[]
     def __init__(self, mbr, objects=None):
         self.mbr = mbr
         self.objects = objects if objects is not None else []
         self.geoms = []
-           
+        Cell.cells.append(self.mbr)
+        
     def add(self,g):
         self.geoms.append(Geometry(g.x,g.y))    
 	
     def print(self):
-        for obj in self.geoms:
-            obj.print()
+        for geoms in Geometry.all:
+            print(geoms.name)
+    def getGeometry(self):
+        arr = []
+        return self.geoms
+    
+    
 
 class Grid:
-    def __init__(self, mbr, m):
-        self.mbr = mbr  # The MBR for the entire grid
-        self.m = m      # Number of divisions along each axis
-        self.deltax = (mbr.xmax - mbr.xmin) / m  # Calculate the width of each cell
-        self.deltay = (mbr.ymax - mbr.ymin) / m  # Calculate the height of each cell
-        self.cells = []  # 2D list to store cells
-        self.points = []
+    def __init__(self, xmin,ymin,xmax,ymax, m):
+        self.xmin = xmin
+        self.ymin = ymin
+        self.xmax = xmax
+        self.ymax = ymax
+        self.m=m
+        self.deltax = (self.xmax - self.xmin) / m  # Calculate the width of each cell
+        self.deltay = (self.ymax - self.ymin) / m  # Calculate the height of each cell
+        # print('deltaX:',self.deltax,' deltaY:',self.deltay)
+        self.cells = [[0]*int(self.deltax)]*int(self.deltay)  # 2D list to store cells
+        self.points = [Cell(mbr)for i in range(m)]
         self.create_grid()
 
     def create_grid(self):
         for i in range(self.m):
             row = []
             for j in range(self.m):
-                xmin = self.mbr.xmin + i * self.deltax
-                xmax = self.mbr.xmin + (i + 1) * self.deltax
-                ymin = self.mbr.ymin + j * self.deltay
-                ymax = self.mbr.ymin + (j + 1) * self.deltay
+                xmin = self.xmin + i * self.deltax
+                xmax = self.xmin + (i + 1) * self.deltax
+                ymin = self.ymin + j * self.deltay
+                ymax = self.ymin + (j + 1) * self.deltay
                 cell_mbr = MBR(xmax, xmin, ymax, ymin)
+                # print('xmin:',xmin,' ymin:',ymin,' xmax:',xmax,' ymax:',ymax)
                 row.append(Cell(cell_mbr))
             self.cells.append(row)
     	
     def add(self,g):
         cell = self.findCell(g.x,g.y)
-        cell.print()
         cell.add(Geometry(g.x,g.y))
         self.points.append(cell)
 	
     def findCell(self,x, y):
-        self.deltax = (self.mbr.xmax - self.mbr.xmin)/self.m
-        self.deltay = (self.mbr.ymax - self.mbr.ymin)/self.m
-        i = (int)((x - self.mbr.xmin)/self.deltax )
-        j = (int)((y - self.mbr.ymin)/self.deltay)
+        i = (int)((x -self.xmin)/self.deltax )
+        j = (int)((y -self.ymin)/self.deltay)
         return self.cells[i][j]
-        # for (int i=0  i < m  i++) 
-		# 	for (int j=0  j < m  j++) 
-		# 		Cell c = cells[i][j]
-		# 		if ((c.xmin < x && c.xmax > x) && (c.ymin < y && c.ymax > y))
-		# 			return c`
-    # def printPoints(self):
-    #     for i in self.points:
-    #         print(i.x)
-	
+        
+    def getPoints(self):
+        lat = []
+        longs = []
+        for geom in Geometry.all:
+            lat.append(geom.y)
+            longs.append(geom.x)
+        return lat,longs
+
 # Create a grid with MBR and visualize it using matplotlib
-mbr = MBR(1, 0, 1, 0)  # The MBR for the whole grid
-grid = Grid(mbr, 5)  # Create a grid with 5x5 cells
-# grid.add(Geometry(5, 8))
-# grid.add(Geometry(5, 0))
-# grid.add(Geometry(5, 2))
-# grid.printPoints()
-# Visualize the grid using matplotlib
-# points = []
-# with open("points.txt", "r") as f:
-#     for line in f:
-#         x, y = map(float, line.strip().split(","))
-#         points.append((x, y))
-import pandas as pd
+
 df = pd.read_csv('kmeans_spatial_points.csv')
-print(df.head())
+# print(df.head())
 
 
 
+import numpy as np
 csv_data = pd.read_csv('kmeans_spatial_points.csv')
-
 # Step 2: Extract normLatitude and normLongitude columns
 latitudes = csv_data['normLatitude']
 longitudes = csv_data['normLongitude']
+maxLatitude= latitudes.max()
+maxLatitude = math.ceil(maxLatitude)
+maxLongitude= longitudes.max()
+# print(maxLongitude)
+maxLongitude = math.ceil(maxLongitude)
 
-# Step 3: Assuming 'points' list and 'grid' object from previous example are defined
+points_array = np.column_stack((longitudes, latitudes))
+def assignPointsToGrid(x,y):
+    geom = Geometry(x,y)
+    grid.add(geom)
+    
+mbr = MBR(maxLatitude, 0, maxLongitude, 0)  # The MBR for the whole grid
+grid = Grid(0,0,maxLongitude,maxLatitude, 2)
+result = [assignPointsToGrid(x,y) for x,y in zip(csv_data['normLongitude'],csv_data['normLatitude'])]
+
+latitudes,longitudes = grid.getPoints()    
+
+# for cell in Cell.cells:
+for mbr in MBR.mbrs:
+    print(f"xmin {mbr.xmin} xmax {mbr.xmax} ymin {mbr.ymin} ymax {mbr.ymax}")
+
 def plot():
     fig, ax = plt.subplots()
 
@@ -121,15 +150,16 @@ def plot():
     ax.scatter(latitudes, longitudes, color='green', label='CSV Points', zorder=6)
 
     # Step 6: Set the limits of the plot based on the grid MBR
-    ax.set_xlim(grid.mbr.xmin, grid.mbr.xmax)
-    ax.set_ylim(grid.mbr.ymin, grid.mbr.ymax)
+    ax.set_xlim(grid.xmin, grid.xmax)
+    ax.set_ylim(grid.ymin, grid.ymax)
     ax.set_aspect('equal')
 
     # Add plot title, labels, and grid
-    plt.title('Grid with Original Points and CSV Points')
+    plt.title('Grid with Points')
     plt.xlabel('X-axis')
     plt.ylabel('Y-axis')
-    plt.grid(True)
+    plt.grid(False)
     plt.legend()
     plt.show()
-plot()
+# plot()
+
