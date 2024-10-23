@@ -31,7 +31,7 @@ class Geometry:
     
 class Cell:
     cells =[]
-    def __init__(self, xmin,ymin,xmax,ymax):
+    def __init__(self, xmin=None,ymin=None,xmax=None,ymax=None):
         self.xmin = xmin
         self.ymin = ymin
         self.xmax = xmax
@@ -51,17 +51,16 @@ class Cell:
     
     def subdivide(self, divisions=2,deltaX=None,deltaY=None):
         """Subdivide the cell into smaller cells."""
-
-        subcells = []
+        subcells=[]
         for i in range(divisions):
+            row = []
             for j in range(divisions):
-                xmin = self.xmin + i * deltaX
-                xmax = self.xmin + (i + 1) * deltaX
-                ymin = self.ymin + j * deltaY
-                ymax = self.ymin + (j + 1) * deltaY
-                print('xmin:',xmin,' ymin:',ymin,' xmax:',xmax,' ymax:',ymax)
-                subcells.append(Cell(xmax=xmax, xmin=xmin, ymax=ymax, ymin=ymin))
-
+                xmin = self.xmin + i * 0.25
+                xmax = self.xmin + (i + 1) * 0.25
+                ymin = self.ymin + j * 0.25
+                ymax = self.ymin + (j + 1) * 0.25
+                row.append(Cell(xmax=xmax, xmin=xmin, ymax=ymax, ymin=ymin))
+            subcells.append(row)
         return subcells
     
     def __repr__(self):
@@ -77,9 +76,8 @@ class Grid:
         self.deltax = (self.xmax - self.xmin) / m  # Calculate the width of each cell
         self.deltay = (self.ymax - self.ymin) / m  # Calculate the height of each cell
         print(f"deltaX:{self.deltax} deltaY:{self.deltay}")
-        # print('deltaX:',self.deltax,' deltaY:',self.deltay)
-        self.cells = [[0]*int(self.deltax)]*int(self.deltay)  # 2D list to store cells
-        # self.cells=[]
+        self.cells =[]
+        
         self.points = [[0]*int(self.deltax)]*int(self.deltay)
         self.create_grid()
 
@@ -91,12 +89,9 @@ class Grid:
                 xmax = self.xmin + (i + 1) * self.deltax
                 ymin = self.ymin + j * self.deltay
                 ymax = self.ymin + (j + 1) * self.deltay
-                # print('xmin:',xmin,' ymin:',ymin,' xmax:',xmax,' ymax:',ymax)
                 row.append(Cell(xmax=xmax, xmin=xmin, ymax=ymax, ymin=ymin))
-            # print(f"{row} {i}")
             self.cells.append(row)
-            # print(self.cells)
-    	
+            	
     def add(self,g):
         cell = self.findCell(g.x,g.y)
         cell.add(Geometry(g.x,g.y))
@@ -112,11 +107,12 @@ class Grid:
             subdivided_rows = [[] for _ in range(subdivisions)]
             for j in range(self.m):
                 subcells = self.cells[i][j].subdivide(subdivisions,self.deltax,self.deltay)
-            
+                
+            # print(subcells)
             # Add subcells to the appropriate rows
             for i in range(subdivisions):
                 subdivided_rows[i].append(subcells[i * subdivisions:(i + 1) * subdivisions])
-                print(subdivided_rows[i])
+                # print(subdivided_rows[i])
             new_grid.append(subdivided_rows)
 
         return new_grid
@@ -135,54 +131,42 @@ class Grid:
                 print(geom)
     
 
-# Create a grid with MBR and visualize it using matplotlib
 def plot():
     fig, ax = plt.subplots()
-    
-    # Draw each cell as a rectangle (grid visualization)
+    # Visualize grid
     # for i in range(grid.m):
-        # for j in range(grid.m):
-    for row in newGrid:
-        for col in row:
-            for obj in col:
-                for cell in obj:
-                    # cell = grid.cells[i][j]
-                    rect = patches.Rectangle(
-                        # (cell.xmin,cell.ymin),
-                        (cell.xmin, cell.ymin),  # Bottom left corner
-                        grid.deltax,                     # Width
-                        grid.deltay,                     # Height
-                        edgecolor='blue',
-                        facecolor='none'
-                    )
-                    ax.add_patch(rect)
-    # for i in range(subGrid.m):
-    #     for j in range(subGrid.m):
-    #         cell = subGrid.cells[i][j]
+    #     for j in range(grid.m):
+    #         cell = grid.cells[i][j]
     #         rect = patches.Rectangle(
+    #             # (cell.xmin,cell.ymin),
     #             (cell.xmin, cell.ymin),  # Bottom left corner
-    #             subGrid.deltax,                     # Width
-    #             subGrid.deltay,                     # Height
+    #             grid.deltax,                     # Width
+    #             grid.deltay,                     # Height
     #             edgecolor='blue',
     #             facecolor='none'
     #         )
     #         ax.add_patch(rect)
     
-    # Step 4: Plot the points from the previous 'points' list
-    # x_coords, y_coords = zip(*points)
-    # ax.scatter(x_coords, y_coords, color='red', label='Original Points', zorder=5)
-    # ax.scatter(subY, subX, color='red', label='Original Points', zorder=5)
-    
-    # Step 5: Plot the points from the CSV file
+    # Visualize subgrid
+    for row in newGrid:
+        print(row)
+        for cell in row:
+                print(f"cellWidth: {abs(cell.xmin-cell.xmax)}")
+                rect = patches.Rectangle(
+                    (cell.xmin, cell.ymin),  # Bottom left corner
+                    0.25,
+                    0.25,
+                    edgecolor='blue',
+                    facecolor='none'
+                )
+                ax.add_patch(rect)
     ax.scatter(latitudes, longitudes, color='green', label='CSV Points', zorder=6)
     # ax.scatter(y, x, color='green', label='CSV Points', zorder=6)
 
-    # Step 6: Set the limits of the plot based on the grid MBR
     # ax.set_xlim(grid.xmin, grid.xmax)
     # ax.set_ylim(grid.ymin, grid.ymax)
     ax.set_aspect('equal')
 
-    # Add plot title, labels, and grid
     plt.title('Grid with Points')
     plt.xlabel('X-axis')
     plt.ylabel('Y-axis')
@@ -197,25 +181,28 @@ def assignPointsToGrid(x, y, grid:Grid):
 
 
 csv_data = pd.read_csv('kmeans_spatial_points.csv')
-# Step 2: Extract normLatitude and normLongitude columns
 latitudes = csv_data['normLatitude']
 longitudes = csv_data['normLongitude']
 maxLatitude= latitudes.max()
 maxLatitude = math.ceil(maxLatitude)
 maxLongitude= longitudes.max()
-# print(maxLongitude)
 maxLongitude = math.ceil(maxLongitude)
 
 points_array = np.column_stack((longitudes, latitudes))
 
-# mbr = MBR(xmax=maxLongitude, xmin=0, ymax=maxLatitude, ymin=0) 
 grid = Grid(xmin=0, ymin=0, xmax=maxLongitude,  ymax=maxLatitude,   m=2)
 result = [assignPointsToGrid(x,y,grid) for x,y in zip(csv_data['normLongitude'],csv_data['normLatitude'])]
-newGrid=grid.divideGrid()    
-
-
-subGrid = Grid(0.5,0,1,0.5,4)
-
+def divide_grid(grid):
+    new_grid = []
+    
+    for row in grid.cells:
+        subdivided_rows = [[], []]  # Two new rows will be formed for each row
+        for cell in row:
+            subcells = cell.subdivide()
+            subdivided_rows.extend(subcells)
+        new_grid.extend(subdivided_rows)
+    return new_grid
+newGrid = divide_grid(grid)
 
 plot()
 
