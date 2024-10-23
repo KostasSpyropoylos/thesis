@@ -41,11 +41,7 @@ class Cell:
         
     def add(self,g):
         self.geoms.append(Geometry(g.x,g.y))    
-	
-    def print(self):
-        for geoms in Geometry.all:
-            print(geoms.name)
-            
+        
     def getGeometry(self):
         return self.geoms
     
@@ -75,7 +71,7 @@ class Grid:
         self.m=m
         self.deltax = (self.xmax - self.xmin) / m  # Calculate the width of each cell
         self.deltay = (self.ymax - self.ymin) / m  # Calculate the height of each cell
-        print(f"deltaX:{self.deltax} deltaY:{self.deltay}")
+       
         self.cells =[]
         
         self.points = [[0]*int(self.deltax)]*int(self.deltay)
@@ -108,12 +104,12 @@ class Grid:
             for j in range(self.m):
                 subcells = self.cells[i][j].subdivide(subdivisions,self.deltax,self.deltay)
                 
-            # print(subcells)
             # Add subcells to the appropriate rows
             for i in range(subdivisions):
                 subdivided_rows[i].append(subcells[i * subdivisions:(i + 1) * subdivisions])
-                # print(subdivided_rows[i])
+
             new_grid.append(subdivided_rows)
+
 
         return new_grid
 
@@ -124,12 +120,7 @@ class Grid:
             lats.append(geom.y)
             longs.append(geom.x)
         return longs,lats
-    
-    def getPoints(self):
-        for point in self.points:
-            for geom in point.geoms:
-                print(geom)
-    
+
 
 def plot():
     fig, ax = plt.subplots()
@@ -149,9 +140,8 @@ def plot():
     
     # Visualize subgrid
     for row in newGrid:
-        print(row)
         for cell in row:
-                print(f"cellWidth: {abs(cell.xmin-cell.xmax)}")
+                
                 rect = patches.Rectangle(
                     (cell.xmin, cell.ymin),  # Bottom left corner
                     0.25,
@@ -160,8 +150,13 @@ def plot():
                     facecolor='none'
                 )
                 ax.add_patch(rect)
-    ax.scatter(latitudes, longitudes, color='green', label='CSV Points', zorder=6)
-    # ax.scatter(y, x, color='green', label='CSV Points', zorder=6)
+        lats = []
+        longs = []
+    for geom in Geometry.all:
+        lats.append(geom.y)
+        longs.append(geom.x)
+    
+    ax.scatter(lats,longs, color='green', label='CSV Points', zorder=6)
 
     # ax.set_xlim(grid.xmin, grid.xmax)
     # ax.set_ylim(grid.ymin, grid.ymax)
