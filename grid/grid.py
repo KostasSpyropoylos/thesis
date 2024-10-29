@@ -4,15 +4,7 @@ import pandas as pd
 import numpy as np
 import math
 # Define MBR, Cell, and Grid classes as per the corrected code
-class MBR:
-    mbrs = []
-    def __init__(self, xmax, xmin, ymax, ymin):
-        self.xmax = xmax
-        self.xmin = xmin
-        self.ymax = ymax
-        self.ymin = ymin
-        MBR.mbrs.append(self)
-        
+
 class Geometry:
     all = []
     def __init__(self,x,y):
