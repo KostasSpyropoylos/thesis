@@ -37,7 +37,7 @@ class Cell:
     def getGeometry(self):
         return self.geoms
     
-    def subdivide(self, divisions=2,deltaX=None,deltaY=None):
+    def subdivide(self, divisions=2):
         """Subdivide the cell into smaller cells."""
         subcells=[]
         for i in range(divisions):
@@ -55,6 +55,8 @@ class Cell:
         return f"Cell({self.xmin}, {self.xmax}, {self.ymin}, {self.ymax})"
 
 class Grid:
+    centroids = [[0 for x in range(2)] for x in range(2)] 
+    cell_radius = [[0 for x in range(2)] for x in range(2)] 
     def __init__(self, xmin,ymin,xmax,ymax, m):
         self.xmin = xmin
         self.ymin = ymin
@@ -64,21 +66,20 @@ class Grid:
         self.deltax = (self.xmax - self.xmin) / m  # Calculate the width of each cell
         self.deltay = (self.ymax - self.ymin) / m  # Calculate the height of each cell
        
-        self.cells =[]
-        
+        self.cells =[[0 for x in range(m)] for x in range(m)] 
         self.points = [[0]*int(self.deltax)]*int(self.deltay)
         self.create_grid()
 
     def create_grid(self):
         for i in range(self.m):
-            row = []
             for j in range(self.m):
                 xmin = self.xmin + i * self.deltax
                 xmax = self.xmin + (i + 1) * self.deltax
                 ymin = self.ymin + j * self.deltay
                 ymax = self.ymin + (j + 1) * self.deltay
-                row.append(Cell(xmax=xmax, xmin=xmin, ymax=ymax, ymin=ymin))
-            self.cells[i][j])
+                self.cells[i][j]=Cell(xmax=xmax, xmin=xmin, ymax=ymax, ymin=ymin)
+                self.centroids[i][j]=[(xmax+xmin)/2,(ymax+ymin)/2]
+                # print(self.cells[i][j])
       
     def assignPointsToGrid(self,data):
         for x,y in data:
@@ -99,10 +100,21 @@ class Grid:
         i = (int)((x -self.xmin)/self.deltax )
         j = (int)((y -self.ymin)/self.deltay)
         return self.cells[i][j]
-    def divideGrid(self,subdivisions=2):
-        new_grid = []
+    
+    def centroid(self,points):    
+        x_coords = [p.x for p in points]
+        y_coords = [p.y for p in points]
+        _len = len(points)
+        if(_len>0):
+            centroid_x = sum(x_coords)/_len
+            centroid_y = sum(y_coords)/_len
+        else:
+            centroid_x= 0
+            centroid_y= 0
+        return [centroid_x, centroid_y]
+    
+    def getCellRadius(self):
         for i in range(self.m):
-            subdivided_rows = [[] for _ in range(subdivisions)]
             for j in range(self.m):
                 for geom in self.cells[i][j].getGeometry():
                     dist=self.getDistance(geom,self.centroids[i][j])
