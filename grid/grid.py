@@ -78,8 +78,18 @@ class Grid:
                 ymin = self.ymin + j * self.deltay
                 ymax = self.ymin + (j + 1) * self.deltay
                 row.append(Cell(xmax=xmax, xmin=xmin, ymax=ymax, ymin=ymin))
-            self.cells.append(row)
-            	
+            self.cells[i][j])
+      
+    def assignPointsToGrid(self,data):
+        for x,y in data:
+            geom = Geometry(x,y)
+            self.add(geom) 
+        for i in range(self.m):
+            for j in range(self.m):
+                self.centroids[i][j]= self.centroid(self.cells[i][j].getGeometry())
+        self.getCellRadius()
+        
+                	
     def add(self,g):
         cell = self.findCell(g.x,g.y)
         cell.add(Geometry(g.x,g.y))
@@ -160,14 +170,9 @@ def plot():
     plt.grid(False)
     plt.legend()
     plt.show()
-
-def assignPointsToGrid(x, y, grid:Grid):
-    geom = Geometry(x,y)
-    grid.add(geom)
+  
     
-
-
-csv_data = pd.read_csv('kmeans_spatial_points.csv')
+csv_data = pd.read_csv('points.csv', nrows=1000000)
 latitudes = csv_data['normLatitude']
 longitudes = csv_data['normLongitude']
 maxLatitude= latitudes.max()
@@ -177,19 +182,16 @@ maxLongitude = math.ceil(maxLongitude)
 
 points_array = np.column_stack((longitudes, latitudes))
 
-grid = Grid(xmin=0, ymin=0, xmax=maxLongitude,  ymax=maxLatitude,   m=2)
-result = [assignPointsToGrid(x,y,grid) for x,y in zip(csv_data['normLongitude'],csv_data['normLatitude'])]
-def divide_grid(grid):
-    new_grid = []
-    
-    for row in grid.cells:
-        subdivided_rows = [[], []]  # Two new rows will be formed for each row
-        for cell in row:
-            subcells = cell.subdivide()
-            subdivided_rows.extend(subcells)
-        new_grid.extend(subdivided_rows)
-    return new_grid
-newGrid = divide_grid(grid)
+#initiate grid 2x2
+grid = Grid(xmin=0, ymin=0, xmax=maxLongitude,  ymax=maxLatitude, m=2)
+#assign points to grid
+grid.assignPointsToGrid(zip(csv_data['normLongitude'],csv_data['normLatitude']))
+
+#divide each cell into to a new 2x2 grid
+newGrid = grid.divideGrid()
+
+
+
 
 plot()
 
