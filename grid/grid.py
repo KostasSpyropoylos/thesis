@@ -127,41 +127,53 @@ class Grid:
 def plot():
     fig, ax = plt.subplots()
     # Visualize grid
-    # for i in range(grid.m):
-    #     for j in range(grid.m):
-    #         cell = grid.cells[i][j]
-    #         rect = patches.Rectangle(
-    #             # (cell.xmin,cell.ymin),
-    #             (cell.xmin, cell.ymin),  # Bottom left corner
-    #             grid.deltax,                     # Width
-    #             grid.deltay,                     # Height
-    #             edgecolor='blue',
-    #             facecolor='none'
-    #         )
-    #         ax.add_patch(rect)
-    
+    geometriesLen = len(Geometry.all)
+    print((geometriesLen))
+    for i in range(grid.m):
+        for j in range(grid.m):
+            cell = grid.cells[i][j]
+            rect = patches.Rectangle(
+                # (cell.xmin,cell.ymin),
+                (cell.xmin, cell.ymin),  # Bottom left corner
+                grid.deltax,                     # Width
+                grid.deltay,                     # Height
+                edgecolor='blue',
+                facecolor='none'
+            )
+            ax.add_patch(rect)
+            centroid_x = grid.centroids[i][j][0]  # x-coordinate
+            centroid_y = grid.centroids[i][j][1]  # y-coordinate
+            
+            # Plot the centroid
+            ax.scatter(centroid_y, centroid_x, color='red', label='CSV Points', zorder=8)
+            
+            # Get the radius for the current cell
+            radius = grid.cell_radius[i][j]
+            
+            # Create a circle patch
+            circle = patches.Circle((centroid_y, centroid_x), radius)
+            ax.add_patch(circle)
     # Visualize subgrid
-    for row in newGrid:
-        for cell in row:
+    # for row in newGrid:
+    #     for cell in row:
                 
-                rect = patches.Rectangle(
-                    (cell.xmin, cell.ymin),  # Bottom left corner
-                    0.25,
-                    0.25,
-                    edgecolor='blue',
-                    facecolor='none'
-                )
-                ax.add_patch(rect)
-        lats = []
-        longs = []
+    #             rect = patches.Rectangle(
+    #                 (cell.xmin, cell.ymin),  # Bottom left corner
+    #                 0.25,
+    #                 0.25,
+    #                 edgecolor='blue',
+    #                 facecolor='none'
+    #             )
+    #             ax.add_patch(rect)
+    
+    lats = []
+    longs = []
+    
     for geom in Geometry.all:
         lats.append(geom.y)
         longs.append(geom.x)
     
     ax.scatter(lats,longs, color='green', label='CSV Points', zorder=6)
-
-    # ax.set_xlim(grid.xmin, grid.xmax)
-    # ax.set_ylim(grid.ymin, grid.ymax)
     ax.set_aspect('equal')
 
     plt.title('Grid with Points')
