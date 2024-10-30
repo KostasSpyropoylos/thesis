@@ -104,15 +104,26 @@ class Grid:
         for i in range(self.m):
             subdivided_rows = [[] for _ in range(subdivisions)]
             for j in range(self.m):
-                subcells = self.cells[i][j].subdivide(subdivisions,self.deltax,self.deltay)
-                
-            # Add subcells to the appropriate rows
-            for i in range(subdivisions):
-                subdivided_rows[i].append(subcells[i * subdivisions:(i + 1) * subdivisions])
-
-            new_grid.append(subdivided_rows)
-
-
+                for geom in self.cells[i][j].getGeometry():
+                    dist=self.getDistance(geom,self.centroids[i][j])
+                    if(dist > self.cell_radius[i][j]):
+                        self.cell_radius[i][j]=dist
+                        
+    def getDistance(self,geom,centroid):
+        dist = math.sqrt(
+            math.pow(abs(centroid[0] - geom.x), 2) +  
+            math.pow(abs(centroid[1] - geom.y), 2)
+        )
+        return dist
+        
+    def divideGrid(self,subdivisions=2):
+        new_grid = []
+        for row in self.cells:
+            subdivided_rows = [[], []]  # Two new rows will be formed for each row
+            for cell in row:
+                subcells = cell.subdivide(2)
+                subdivided_rows.extend(subcells)
+            new_grid.extend(subdivided_rows)
         return new_grid
 
     def getGeometries(self):
