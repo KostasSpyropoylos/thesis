@@ -3,7 +3,7 @@ import matplotlib.patches as patches
 import pandas as pd
 import numpy as np
 import math
-from grid.grid import Geometry, Grid
+from grid.gbdc import Geometry, Grid
 
 
 def plot():
@@ -63,31 +63,18 @@ def plot():
 
 
 if __name__ == "__main__":
-    # csv_data = pd.read_csv('points.csv', nrows=1000000)
     csv_data = pd.read_csv("grid/points.csv")
-    latitudes = csv_data["normLatitude"]
-    longitudes = csv_data["normLongitude"]
-    maxLatitude = latitudes.max()
-    minLatitude = latitudes.min()
-    minLatitude = math.floor(minLatitude)
-    maxLatitude = math.ceil(maxLatitude)
-    
-    maxLongitude = longitudes.max()
-    maxLongitude = math.ceil(maxLongitude)
-    
-    minLongtitude = longitudes.min()
-    minLongtitude = math.floor(minLongtitude)
-    
+    latitudes = csv_data["normLatitude"].values
+    longitudes = csv_data["normLongitude"].values
+
+    minLatitude = math.floor(latitudes.min())
+    maxLatitude = math.ceil(latitudes.max())
+    minLongitude = math.floor(longitudes.min())
+    maxLongitude = math.ceil(longitudes.max())
+
     points_array = np.column_stack((longitudes, latitudes))
 
-    # initiate grid 2x2
-    grid = Grid(
-        xmin=minLongtitude, ymin=minLatitude, xmax=maxLongitude, ymax=maxLatitude, m=2
-    )
-    # assign points to grid
-    grid.assignPointsToGrid(zip(csv_data["normLongitude"], csv_data["normLatitude"]))
-
-    # divide each cell into to a new 2x2 grid
-    # newGrid = grid.divideGrid()
-
-    plot()
+    grid = Grid(points_array)
+    labeled_grid, num_clusters = grid.cluster(density_threshold=10)
+    print("Number of clusters:", num_clusters)
+    grid.visualize(labeled_grid)
