@@ -28,22 +28,18 @@ class Grid:
         self.data = np.array(data)
         self.n, self.m = self.data.shape
 
-        # Compute grid size adaptively if not provided
         self.l = l if l else self.compute_optimal_l()
 
-        # Compute min/max for each feature
         self.x_min = np.min(self.data, axis=0)
         self.x_max = np.max(self.data, axis=0)
 
-        # Scale data to fit in [1, l+1]
         self.scaled_data = self.scale_data()
 
-        # Create grid structure
         self.cells = self.create_grid()
 
     def compute_optimal_l(self):
         """Compute the grid resolution (l) based on dataset properties."""
-        return int(np.sqrt(self.n))  # Default: sqrt(n), can be modified
+        return int(np.sqrt(self.n))
 
     def scale_data(self):
         """Apply the scaling function Φ(x) to transform features to range [1, l+1]."""

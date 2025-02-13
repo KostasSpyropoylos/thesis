@@ -1,7 +1,4 @@
-
 import math
-
-# Define MBR, Cell, and Grid classes as per the corrected code
 
 
 class Geometry:
@@ -70,8 +67,8 @@ class Grid:
         self.xmax = xmax
         self.ymax = ymax
         self.m = m
-        self.deltax = (self.xmax - self.xmin) / m  # Calculate the width of each cell
-        self.deltay = (self.ymax - self.ymin) / m  # Calculate the height of each cell
+        self.deltax = (self.xmax - self.xmin) / m
+        self.deltay = (self.ymax - self.ymin) / m
 
         self.cells = [[0 for x in range(m)] for x in range(m)]
         self.points = [[0] * int(self.deltax)] * int(self.deltay)
@@ -86,7 +83,6 @@ class Grid:
                 ymax = self.ymin + (j + 1) * self.deltay
                 self.cells[i][j] = Cell(xmax=xmax, xmin=xmin, ymax=ymax, ymin=ymin)
                 self.centroids[i][j] = [(xmax + xmin) / 2, (ymax + ymin) / 2]
-                # print(self.cells[i][j])
 
     def assignPointsToGrid(self, data):
         for x, y in data:
@@ -125,7 +121,7 @@ class Grid:
     def divideGrid(self, subdivisions=2):
         new_grid = []
         for row in self.cells:
-            subdivided_rows = [[], []]  # Two new rows will be formed for each row
+            subdivided_rows = [[], []]
             for cell in row:
                 subcells = cell.subdivide(2)
                 subdivided_rows.extend(subcells)
@@ -154,4 +150,3 @@ class Grid:
             lats.append(geom.y)
             longs.append(geom.x)
         return longs, lats
-

@@ -8,7 +8,7 @@ from grid.gbdc import Geometry, Grid
 
 def plot():
     fig, ax = plt.subplots()
-    # Visualize grid
+
     colors = ["red", "blue", "green", "yellow"]
     cnt = 0
     geometriesLen = len(Geometry.all)
@@ -21,32 +21,23 @@ def plot():
             for geom in geoms:
                 arr.append((geom.x, geom.y))
 
-            # print(arr[:][0])
-
             ax.set_aspect("equal")
             rect = patches.Rectangle(
-                # (cell.xmin,cell.ymin),
-                (cell.xmin, cell.ymin),  # Bottom left corner
-                grid.deltax,  # Width
-                grid.deltay,  # Height
+                (cell.xmin, cell.ymin),
+                grid.deltax,
+                grid.deltay,
                 edgecolor="blue",
                 facecolor="none",
             )
             ax.add_patch(rect)
-            centroid_x = grid.centroids[i][j][0]  # x-coordinate
-            centroid_y = grid.centroids[i][j][1]  # y-coordinate
+            centroid_x = grid.centroids[i][j][0]
+            centroid_y = grid.centroids[i][j][1]
 
-            # Plot the centroid
             ax.scatter(centroid_y, centroid_x, color="red", label=None, zorder=8)
 
-            # Get the radius for the current cell
             radius = grid.cell_radius[i][j]
             print(radius)
-            # Create a circle patch
 
-            # Visualize subgrid
-            # for row in newGrid:
-            #     for cell in row:
             x_elements = [a for a, b in arr]
             y_elements = [b for a, b in arr]
             ax.scatter(y_elements, x_elements, color="black", label=None)
