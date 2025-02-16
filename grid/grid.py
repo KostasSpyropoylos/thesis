@@ -1,7 +1,6 @@
-
 import math
 
-# Define MBR, Cell, and Grid classes as per the corrected code
+import math
 
 
 class Geometry:
@@ -15,143 +14,144 @@ class Geometry:
     def getGeometry(self):
         return self.x, self.y
 
-    def getX(self):
-        return self.x
-
-    def getY(self):
-        return self.y
-
     def __repr__(self) -> str:
-        return f"Geometry(x={self.x} y={self.y})"
+        return f"Geometry(x={self.x}, y={self.y})"
 
 
 class Cell:
-    cells = []
-
     def __init__(self, xmin=None, ymin=None, xmax=None, ymax=None):
         self.xmin = xmin
         self.ymin = ymin
         self.xmax = xmax
         self.ymax = ymax
         self.geoms = []
-        Cell.cells.append(self)
 
     def add(self, g):
-        self.geoms.append(Geometry(g.x, g.y))
+        """Add a geometry to the cell"""
+        self.geoms.append(g)
 
     def getGeometry(self):
+        """Return geometries assigned to this cell"""
         return self.geoms
 
-    def subdivide(self, divisions=2):
-        """Subdivide the cell into smaller cells."""
-        subcells = []
-        for i in range(divisions):
-            row = []
-            for j in range(divisions):
-                xmin = self.xmin + i * 0.25
-                xmax = self.xmin + (i + 1) * 0.25
-                ymin = self.ymin + j * 0.25
-                ymax = self.ymin + (j + 1) * 0.25
-                row.append(Cell(xmax=xmax, xmin=xmin, ymax=ymax, ymin=ymin))
-            subcells.append(row)
-        return subcells
+    def getCentroid(self):
+        """Compute and return centroid"""
+        return [(self.xmin + self.xmax) / 2, (self.ymin + self.ymax) / 2]
 
     def __repr__(self):
         return f"Cell({self.xmin}, {self.xmax}, {self.ymin}, {self.ymax})"
 
 
 class Grid:
-    centroids = [[0 for x in range(20)] for x in range(20)]
-    cell_radius = [[0 for x in range(20)] for x in range(20)]
-
     def __init__(self, xmin, ymin, xmax, ymax, m):
         self.xmin = xmin
         self.ymin = ymin
         self.xmax = xmax
         self.ymax = ymax
         self.m = m
-        self.deltax = (self.xmax - self.xmin) / m  # Calculate the width of each cell
-        self.deltay = (self.ymax - self.ymin) / m  # Calculate the height of each cell
+        self.deltax = (self.xmax - self.xmin) / m
+        self.deltay = (self.ymax - self.ymin) / m
 
-        self.cells = [[0 for x in range(m)] for x in range(m)]
-        self.points = [[0] * int(self.deltax)] * int(self.deltay)
-        self.create_grid()
+        # Initialize grid with empty cells
+        self.cells = [
+            [
+                Cell(
+                    xmin=self.xmin + i * self.deltax,
+                    xmax=self.xmin + (i + 1) * self.deltax,
+                    ymin=self.ymin + j * self.deltay,
+                    ymax=self.ymin + (j + 1) * self.deltay,
+                )
+                for j in range(m)
+            ]
+            for i in range(m)
+        ]
 
-    def create_grid(self):
-        for i in range(self.m):
-            for j in range(self.m):
-                xmin = self.xmin + i * self.deltax
-                xmax = self.xmin + (i + 1) * self.deltax
-                ymin = self.ymin + j * self.deltay
-                ymax = self.ymin + (j + 1) * self.deltay
-                self.cells[i][j] = Cell(xmax=xmax, xmin=xmin, ymax=ymax, ymin=ymin)
-                self.centroids[i][j] = [(xmax + xmin) / 2, (ymax + ymin) / 2]
-                # print(self.cells[i][j])
-
-    def assignPointsToGrid(self, data):
-        for x, y in data:
-            geom = Geometry(x, y)
-            self.add(geom)
-        for i in range(self.m):
-            for j in range(self.m):
-                self.centroids[i][j] = self.centroid(self.cells[i][j].getGeometry())
-        self.getCellRadius()
-
-    def add(self, g):
-        cell = self.findCell(g.x, g.y)
-        cell.add(Geometry(g.x, g.y))
-        self.points.append(cell)
+        # Centroids and radius storage
+        self.centroids = [[cell.getCentroid() for cell in row] for row in self.cells]
+        self.cell_radius = [[0 for _ in range(m)] for _ in range(m)]
 
     def findCell(self, x, y):
-        i = (int)((x - self.xmin) / self.deltax)
-        j = (int)((y - self.ymin) / self.deltay)
-        return self.cells[i][j]
+        """Find the appropriate cell for a given (x, y) coordinate."""
+        i = min(max(int((x - self.xmin) / self.deltax), 0), self.m - 1)
+        j = min(max(int((y - self.ymin) / self.deltay), 0), self.m - 1)
+        return self.cells[i][j], i, j
 
-    def centroid(self, points):
-        """Function that finds each cell centroid by adding all the coordinates
-        and dividing by the length of them"""
+    def assignPointsToGrid(self, data):
+        """Assign points to their respective grid cells and update centroids and radius"""
+        for x, y in data:
+            geom = Geometry(x, y)
+            cell, i, j = self.findCell(x, y)
+            cell.add(geom)
 
-        x_coords = [p.x for p in points]
-        y_coords = [p.y for p in points]
-        _len = len(points)
-        if _len > 0:
-            centroid_x = sum(x_coords) / _len
-            centroid_y = sum(y_coords) / _len
-        else:
-            centroid_x = 0
-            centroid_y = 0
-        return [centroid_x, centroid_y]
+        # Compute centroids and update radius
+        self.updateCentroidsAndRadius()
 
-    def divideGrid(self, subdivisions=2):
-        new_grid = []
-        for row in self.cells:
-            subdivided_rows = [[], []]  # Two new rows will be formed for each row
-            for cell in row:
-                subcells = cell.subdivide(2)
-                subdivided_rows.extend(subcells)
-            new_grid.extend(subdivided_rows)
-        return new_grid
-
-    def getCellRadius(self):
+    def updateCentroidsAndRadius(self):
+        """Recalculate centroids and update the radius for each cell"""
         for i in range(self.m):
             for j in range(self.m):
-                for geom in self.cells[i][j].getGeometry():
-                    dist = self.getDistance(geom, self.centroids[i][j])
-                    if dist > self.cell_radius[i][j]:
-                        self.cell_radius[i][j] = dist
+                cell = self.cells[i][j]
+                points = cell.getGeometry()
+
+                if points:
+                    centroid = self.computeCentroid(points)
+                    self.centroids[i][j] = centroid
+                    self.cell_radius[i][j] = max(
+                        self.getDistance(p, centroid) for p in points
+                    )
+                else:
+                    self.cell_radius[i][j] = 0
+
+    def computeCentroid(self, points):
+        """Compute centroid as the mean of all points in a cell"""
+        x_coords = [p.x for p in points]
+        y_coords = [p.y for p in points]
+        return (
+            [sum(x_coords) / len(points), sum(y_coords) / len(points)]
+            if points
+            else [0, 0]
+        )
 
     def getDistance(self, geom, centroid):
-        dist = math.sqrt(
-            math.pow(abs(centroid[0] - geom.x), 2)
-            + math.pow(abs(centroid[1] - geom.y), 2)
-        )
-        return dist
+        """Compute Euclidean distance between a geometry and a centroid"""
+        return math.sqrt((centroid[0] - geom.x) ** 2 + (centroid[1] - geom.y) ** 2)
 
     def getGeometries(self):
-        lats = []
-        longs = []
-        for geom in Geometry.all:
-            lats.append(geom.y)
-            longs.append(geom.x)
-        return longs, lats
+        """Return all geometries as separate lists of latitudes and longitudes"""
+        longs, lats = zip(*[(geom.x, geom.y) for geom in Geometry.all])
+        return list(longs), list(lats)
 
+    def findOverlappingClusters(self):
+        """Finds all overlapping clusters based on centroid distance and radius."""
+        overlapping_clusters = []
+
+        for i in range(self.m):
+            for j in range(self.m):
+                centroid1 = self.centroids[i][j]
+                radius1 = self.cell_radius[i][j]
+
+                if radius1 == 0: 
+                    continue
+
+                for k in range(self.m):
+                    for l in range(self.m):
+                        # Same cell, skip
+                        if (i, j) == (k, l): 
+                            continue
+
+                        centroid2 = self.centroids[k][l]
+                        radius2 = self.cell_radius[k][l]
+
+                        if radius2 == 0:  
+                            continue
+
+                        
+                        distance = math.sqrt(
+                            (centroid2[0] - centroid1[0]) ** 2
+                            + (centroid2[1] - centroid1[1]) ** 2
+                        )
+
+                        if distance < (radius1 + radius2):
+                            overlapping_clusters.append(((i, j), (k, l)))
+
+        return overlapping_clusters
