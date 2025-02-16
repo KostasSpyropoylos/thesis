@@ -3,7 +3,7 @@ import matplotlib.patches as patches
 import pandas as pd
 import numpy as np
 import math
-from grid.grid import Geometry, Grid
+from grid.gbdc import Geometry, Grid
 
 
 def plot():
@@ -62,7 +62,6 @@ def plot():
 
 
 if __name__ == "__main__":
-    # csv_data = pd.read_csv('points.csv', nrows=1000000)
     csv_data = pd.read_csv("grid/points.csv")
     latitudes = csv_data["normLatitude"]
     longitudes = csv_data["normLongitude"]
