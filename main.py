@@ -3,7 +3,7 @@ import matplotlib.patches as patches
 import pandas as pd
 import numpy as np
 import math
-from math import acos, sin
+from math import acos, sin, sqrt
 from sklearn.cluster import KMeans
 from scipy.spatial.distance import euclidean
 from grid.grid import Geometry, Grid, DensityGrid
@@ -90,60 +90,38 @@ def compute_total_overlap(centers, radii):
 
     total_overlap = 0
     num_clusters = len(centers)
-    Pi = 3.14
+    Pi = 3.141592653589793
+
     for i in range(num_clusters):
+        r1 = radii[i]
         for j in range(i + 1, num_clusters):
+            r2 = radii[j]
             distance = math.sqrt(
                 (centers[i][0] - centers[j][0]) ** 2
-                + (centers[j][1] - centers[j][1]) ** 2
+                + (centers[i][1] - centers[j][1]) ** 2
             )
-            if distance > (radii[i] + radii[j]):
+
+            if distance > (r1 + r2):
                 continue
 
-            elif (radii[i] - radii[j]) < distance < (radii[i] + radii[j]):
-                ans = abs(Pi * radii[i] * radii[j])
-            else:
-                print(
-                    (
-                        (radii[i] * radii[i])
-                        + (distance * distance)
-                        - (radii[j] * radii[j])
-                    )
-                    / (2 * radii[i] * distance)
-                )
-                alpha = (
-                    acos(
-                        (
-                            (radii[i] * radii[i])
-                            + (distance * distance)
-                            - (radii[j] * radii[j])
-                        )
-                        / (2 * radii[i] * distance)
-                    )
-                    * 2
-                )
-                beta = (
-                    acos(
-                        (
-                            (radii[j] * radii[j])
-                            + (distance * distance)
-                            - (radii[i] * radii[i])
-                        )
-                        / (2 * radii[j] * distance)
-                    )
-                    * 2
-                )
+            if distance <= abs(r1 - r2):
+                total_overlap += Pi * min(r1, r2) ** 2
+                continue
 
-                a1 = (0.5 * beta * radii[j] * radii[j]) - (
-                    0.5 * radii[j] * radii[j] * math.sin(beta)
-                )
-                a2 = (0.5 * alpha * radii[i] * radii[i]) - (
-                    0.5 * radii[i] * radii[i] * math.sin(alpha)
-                )
-                ans = abs(a1 + a2)
+            part1 = r1**2 * math.acos(
+                (distance**2 + r1**2 - r2**2) / (2 * distance * r1)
+            )
+            part2 = r2**2 * math.acos(
+                (distance**2 + r2**2 - r1**2) / (2 * distance * r2)
+            )
+            part3 = 0.5 * math.sqrt(
+                (-distance + r1 + r2)
+                * (distance + r1 - r2)
+                * (distance - r1 + r2)
+                * (distance + r1 + r2)
+            )
 
-            # overlap = max(0, radii[i] + radii[j] - distance)
-            total_overlap += ans
+            total_overlap += part1 + part2 - part3
 
     return total_overlap
 
@@ -211,7 +189,7 @@ if __name__ == "__main__":
     # initiate KMEANS
     kmeans_data = csv_data[["normLatitude", "normLongitude"]].to_numpy()
     overlap_score, labels, centers, radii = evaluate_kmeans_overlap(
-        kmeans_data, n_clusters=5
+        kmeans_data, n_clusters=7
     )
 
     # plot_clusters(kmeans_data, labels, centers, radii)
@@ -232,5 +210,5 @@ if __name__ == "__main__":
     print("KMEANS Score:", overlap_score)
     print(f"Grid Score: {grid.compute_grid_overlap()}")
     print(f"Density Grid: {density_grid.compute_grid_overlap()}")
-    # plot(grid)
+    plot(grid)
     # plot(density_grid)
