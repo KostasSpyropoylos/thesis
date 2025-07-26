@@ -35,7 +35,7 @@ class RTreeSpatialAnalyzer:
                     xmax, ymax = longitude, latitude
                     self.rtree_index.insert(item_id, (xmin, ymin, xmax, ymax))
                     
-                    self.circle_data.append({"center": (longitude, latitude), "radius": 0.5})
+                    self.circle_data.append({"center": (longitude, latitude), "radius": 1})
                     item_id += 1
             print(f"R-tree built with {item_id} entries.")
             return True
