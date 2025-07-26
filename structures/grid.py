@@ -2,6 +2,7 @@ import math
 
 import math
 from math import sqrt, acos, floor, sin
+import matplotlib.pyplot as plt
 
 
 class Geometry:
@@ -153,7 +154,8 @@ class DensityGrid:
 
                         if distance < (radius1 + radius2):
                             overlapping_clusters.append(((i, j), (k, l)))
-                            print(overlapping_clusters)
+                            # print(f"Overlap between cell ({i},{j}) and ({k},{l})")
+
 
         return overlapping_clusters
 
@@ -194,7 +196,7 @@ class DensityGrid:
                         if distance <= abs(r1 - r2):
                             total_overlap += Pi * min(r1, r2) ** 2
                             continue
-                        # part1 = 0
+                        
                         part1 = r1**2 * math.acos(
                             (distance**2 + r1**2 - r2**2) / (2 * distance * r1)
                         )
@@ -210,6 +212,75 @@ class DensityGrid:
 
                         total_overlap += part1 + part2 - part3
         return total_overlap
+
+    def visualize_grid(self, show_points=True, show_centroids=True, show_radii=True, show_overlap=True):
+        """
+        Visualizes the DensityGrid, including cells, points, centroids, and cluster radii.
+        """
+        fig, ax = plt.subplots(figsize=(10, 10))
+
+        # Plot grid cells
+        for i in range(self.m):
+            for j in range(self.m):
+                cell = self.cells[i][j]
+                rect = plt.Rectangle((cell.xmin, cell.ymin), self.deltax, self.deltay,
+                                     facecolor='none', edgecolor='gray', linestyle='--', alpha=0.5)
+                ax.add_patch(rect)
+
+        # Plot points
+        if show_points:
+            all_x, all_y = [], []
+            for i in range(self.m):
+                for j in range(self.m):
+                    for geom in self.cells[i][j].getGeometry():
+                        all_x.append(geom.x)
+                        all_y.append(geom.y)
+            if all_x and all_y:
+                ax.scatter(all_x, all_y, color='blue', s=10, label='Data Points', zorder=2)
+
+        # Plot centroids and radii
+        centroids_x, centroids_y = [], []
+        for i in range(self.m):
+            for j in range(self.m):
+                centroid = self.centroids[i][j]
+                radius = self.cell_radius[i][j]
+                if centroid != [0,0]: # Only plot if centroid is not default (i.e., cell has points)
+                    centroids_x.append(centroid[0])
+                    centroids_y.append(centroid[1])
+                    if show_radii and radius > 0:
+                        circle = plt.Circle((centroid[0], centroid[1]), radius,
+                                            color='green', alpha=0.2, label='Cluster Radius' if (i==0 and j==0) else "")
+                        ax.add_patch(circle)
+
+        if show_centroids and centroids_x and centroids_y:
+            ax.scatter(centroids_x, centroids_y, color='red', marker='x', s=100, label='Centroids', zorder=3)
+
+        # Highlight overlapping clusters
+        if show_overlap:
+            overlapping_pairs = self.findOverlappingClusters()
+            for (i1, j1), (i2, j2) in overlapping_pairs:
+                centroid1 = self.centroids[i1][j1]
+                radius1 = self.cell_radius[i1][j1]
+                centroid2 = self.centroids[i2][j2]
+                radius2 = self.cell_radius[i2][j2]
+
+                # Draw lines between overlapping centroids
+                ax.plot([centroid1[0], centroid2[0]], [centroid1[1], centroid2[1]],
+                        color='purple', linestyle='-', linewidth=2, zorder=1,
+                        label='Overlapping Link' if (i1,j1) == overlapping_pairs[0][0] and (i2,j2) == overlapping_pairs[0][1] else "")
+
+
+        ax.set_xlim(self.xmin, self.xmax)
+        ax.set_ylim(self.ymin, self.ymax)
+        ax.set_aspect('equal', adjustable='box')
+        ax.set_title('DensityGrid Visualization')
+        ax.set_xlabel('X-coordinate')
+        ax.set_ylabel('Y-coordinate')
+        handles, labels = ax.get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        ax.legend(by_label.values(), by_label.keys())
+        plt.grid(True, linestyle=':', alpha=0.6)
+        plt.show()
 
 
 class Grid:
@@ -382,3 +453,61 @@ class Grid:
                         total_overlap += part1 + part2 - part3
 
         return total_overlap
+
+    def visualize_grid(self, show_points=True, show_centroids=True, show_radii=True):
+        """
+        Visualizes the Grid, including cells, points, centroids, and cluster radii.
+        Note: The 'Grid' class does not have an explicit `findOverlappingClusters`
+        method that prints overlaps during iteration like DensityGrid does.
+        If overlap visualization is desired, you'd need to call
+        `findOverlappingClusters` and then iterate over its results.
+        """
+        fig, ax = plt.subplots(figsize=(10, 10))
+
+        # Plot grid cells
+        for i in range(self.m):
+            for j in range(self.m):
+                cell = self.cells[i][j]
+                rect = plt.Rectangle((cell.xmin, cell.ymin), self.deltax, self.deltay,
+                                     facecolor='none', edgecolor='gray', linestyle='--', alpha=0.5)
+                ax.add_patch(rect)
+
+        # Plot points
+        if show_points:
+            all_x, all_y = [], []
+            for i in range(self.m):
+                for j in range(self.m):
+                    for geom in self.cells[i][j].getGeometry():
+                        all_x.append(geom.x)
+                        all_y.append(geom.y)
+            if all_x and all_y:
+                ax.scatter(all_x, all_y, color='blue', s=10, label='Data Points', zorder=2)
+
+        # Plot centroids and radii
+        centroids_x, centroids_y = [], []
+        for i in range(self.m):
+            for j in range(self.m):
+                centroid = self.centroids[i][j]
+                radius = self.cell_radius[i][j]
+                if centroid != [0,0]:
+                    centroids_x.append(centroid[0])
+                    centroids_y.append(centroid[1])
+                    if show_radii and radius > 0:
+                        circle = plt.Circle((centroid[0], centroid[1]), radius,
+                                            color='green', alpha=0.2, label='Cluster Radius' if (i==0 and j==0) else "")
+                        ax.add_patch(circle)
+
+        if show_centroids and centroids_x and centroids_y:
+            ax.scatter(centroids_x, centroids_y, color='red', marker='x', s=100, label='Centroids', zorder=3)
+
+        ax.set_xlim(self.xmin, self.xmax)
+        ax.set_ylim(self.ymin, self.ymax)
+        ax.set_aspect('equal', adjustable='box')
+        ax.set_title('Grid Visualization')
+        ax.set_xlabel('X-coordinate')
+        ax.set_ylabel('Y-coordinate')
+        handles, labels = ax.get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        ax.legend(by_label.values(), by_label.keys())
+        plt.grid(True, linestyle=':', alpha=0.6)
+        plt.show()
