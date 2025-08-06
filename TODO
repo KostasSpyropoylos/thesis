@@ -1,0 +1,15 @@
+
+1. Find a way to make a dynamic grid, this means I have to find a way to divide and
+then merge cells, in order to find the best suitable clusters for the points
+    - Find a way to subdivide grid and them merge cells based on effiency of the cluster
+        GCBD(grid-based boundary detection) algorithm may be the key
+        In order to split the cells I have to find the best L number to divided the dataset
+        into L intervals, then there is the merge and refinement step which will be carried on
+        in a DBSCAN way
+
+
+
+- DONE Get xmin, xmax,ymin,ymax in order to get the width and height of the Ellipse
+the width of ellipse should be abs(xmin-xmax) and height should be (ymin-ymax) 
+    -No needed to do ellipses our cluster in grid based
+
