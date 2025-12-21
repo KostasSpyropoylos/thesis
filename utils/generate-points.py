@@ -73,38 +73,26 @@ def generate_skewed_coordinates_and_save(
         print("Error: num_points must be a positive integer.")
         return
 
-    # Generate skewed random numbers for latitudes
-    # We use a standard normal distribution and then transform it
-    # The `loc` and `scale` parameters of skewnorm are for mean and std dev of the underlying normal distribution
-    # We'll map the generated values to the desired geographical range later
     latitudes_raw = skewnorm.rvs(a=latitude_skew, size=num_points)
 
-    # Generate skewed random numbers for longitudes
     longitudes_raw = skewnorm.rvs(a=longitude_skew, size=num_points)
-
-    # Scale raw values to fit within geographical bounds
-    # First, normalize to [0, 1] range based on their min/max
     lat_norm = (latitudes_raw - latitudes_raw.min()) / (latitudes_raw.max() - latitudes_raw.min())
     lon_norm = (longitudes_raw - longitudes_raw.min()) / (longitudes_raw.max() - longitudes_raw.min())
 
-    # Then, scale to the desired geographical range
     latitudes = lat_min + lat_norm * (lat_max - lat_min)
     longitudes = lon_min + lon_norm * (lon_max - lon_min)
 
-    # Combine into a DataFrame for easy saving
     coords_df = pd.DataFrame({
         'latitude': latitudes,
         'longitude': longitudes
     })
 
-    # Save to CSV
     try:
         coords_df.to_csv(output_filepath, index=False)
         print(f"Successfully generated {num_points} skewed coordinates and saved to '{output_filepath}'")
     except Exception as e:
         print(f"Error saving data to file: {e}")
 
-# Example Usage:
 generate_skewed_coordinates_and_save(
     num_points=100000,
     latitude_skew=-5,  
