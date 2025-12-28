@@ -30,7 +30,6 @@ class GeneratePoints:
 
         return non_uniform
 
-
 def generate_skewed_coordinates_and_save(
     num_points: int,
     latitude_skew: float,
