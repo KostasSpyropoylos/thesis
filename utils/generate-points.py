@@ -35,10 +35,10 @@ def generate_skewed_coordinates_and_save(
     latitude_skew: float,
     longitude_skew: float,
     output_filepath: str,
-    lat_min: float = -90.0,
-    lat_max: float = 90.0,
-    lon_min: float = -180.0,
-    lon_max: float = 180.0
+    lat_min: float = -4.0,
+    lat_max: float = 4.0,
+    lon_min: float = -8.0,
+    lon_max: float = 8.0
 ):
     """
     Generates a dataset of latitudes and longitudes with skewed distributions
@@ -94,7 +94,7 @@ def generate_skewed_coordinates_and_save(
 
 generate_skewed_coordinates_and_save(
     num_points=100000,
-    latitude_skew=-5,  
+    latitude_skew=-3,  
     longitude_skew=3, 
     output_filepath='datasets/skewed_coords.csv'
 )

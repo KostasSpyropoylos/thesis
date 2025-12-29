@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')
 
-def visualize_dataset(file_path="./datasets/points.csv",output_name="visualized_coords.png"):
+def visualize_dataset(file_path="./datasets/skewed_coords.csv",output_name="visualized_coords.png"):
     try:
         df = pd.read_csv(file_path)
         
@@ -18,7 +18,8 @@ def visualize_dataset(file_path="./datasets/points.csv",output_name="visualized_
     fig, ax = plt.subplots(figsize=(10, 10))
     
 
-    ax.scatter(df['normLongitude'], df['normLatitude'], c='blue', edgecolors='white')
+    # ax.scatter(df['normLongitude'], df['normLatitude'], c='blue', edgecolors='white')
+    ax.scatter(df['longitude'], df['latitude'], c='blue', edgecolors='white')
 
     ax.set_aspect("equal", adjustable="box")
     ax.set_title("Coordinate Distribution")
