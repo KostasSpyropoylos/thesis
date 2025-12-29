@@ -15,21 +15,22 @@ class RTreeSpatialAnalyzer:
         self.rtree_index = index.Index()
         self.circle_data = []
 
-    def load_data_from_csv(self, file_path, chunksize=1000):
+    def load_data_from_csv(self, file_path, chunksize=1000, required_cols=["normLatitude", "normLongitude"]):
         """
         Efficiently reads normLatitude and normLongitude from a CSV file in chunks.
         """
         try:
-            required_cols = ["normLatitude", "normLongitude"]
+            latitude_col =required_cols[0]
+            longitude_col = required_cols[1]
             
             chunk_iter = pd.read_csv(file_path, nrows=1000,chunksize=chunksize)
             item_id = 0
             for chunk in chunk_iter:
                 if not all(col in chunk.columns for col in required_cols):
                     raise ValueError("CSV file must contain 'normLatitude' and 'normLongitude' columns.")
-                
-                latitudes = chunk["normLatitude"].to_numpy()
-                longitudes = chunk["normLongitude"].to_numpy()
+            
+                latitudes = chunk[latitude_col].to_numpy()
+                longitudes = chunk[longitude_col].to_numpy()
                 for latitude, longitude in zip(latitudes, longitudes):
                     xmin, ymin = longitude, latitude
                     xmax, ymax = longitude, latitude
@@ -143,16 +144,16 @@ class RTreeSpatialAnalyzer:
         """
         return list(self.rtree_index.intersection(query_box))
 
-if __name__ == "__main__":
-    csv_file_path = "./grid/points.csv"
-    analyzer = RTreeSpatialAnalyzer()
-    if analyzer.load_data_from_csv(csv_file_path,1000):
-        total_overlap = analyzer.compute_overlap()
-        print(f"Total computed overlap area among circles: {total_overlap:.2f}")
-        analyzer.visualize("Spatial Data Points as Circles from CSV")
-        query_box_example = (20, 20, 60, 60)
-        intersecting_ids = analyzer.query_intersection(query_box_example)
-        print(f"\nQuerying for items intersecting with MBR: {query_box_example}")
-        print(f"Found {len(intersecting_ids)} intersecting items (IDs: {intersecting_ids}).")
-    else:
-        print("Failed to load data. Cannot proceed with analysis.")
+# if __name__ == "__main__":
+#     csv_file_path = "./grid/points.csv"
+#     analyzer = RTreeSpatialAnalyzer()
+#     if analyzer.load_data_from_csv(csv_file_path,1000):
+#         total_overlap = analyzer.compute_overlap()
+#         print(f"Total computed overlap area among circles: {total_overlap:.2f}")
+#         analyzer.visualize("Spatial Data Points as Circles from CSV")
+#         query_box_example = (20, 20, 60, 60)
+#         intersecting_ids = analyzer.query_intersection(query_box_example)
+#         print(f"\nQuerying for items intersecting with MBR: {query_box_example}")
+#         print(f"Found {len(intersecting_ids)} intersecting items (IDs: {intersecting_ids}).")
+#     else:
+#         print("Failed to load data. Cannot proceed with analysis.")
