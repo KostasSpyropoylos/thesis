@@ -23,7 +23,8 @@ class RTreeSpatialAnalyzer:
             latitude_col =required_cols[0]
             longitude_col = required_cols[1]
             
-            chunk_iter = pd.read_csv(file_path, nrows=1000,chunksize=chunksize)
+            # chunk_iter = pd.read_csv(file_path, nrows=1000,chunksize=chunksize)
+            chunk_iter = pd.read_csv(file_path, chunksize=chunksize)
             item_id = 0
             for chunk in chunk_iter:
                 if not all(col in chunk.columns for col in required_cols):
@@ -32,8 +33,8 @@ class RTreeSpatialAnalyzer:
                 latitudes = chunk[latitude_col].to_numpy()
                 longitudes = chunk[longitude_col].to_numpy()
                 for latitude, longitude in zip(latitudes, longitudes):
-                    x_min, y_min = longitude, latitude
-                    x_max, y_max = longitude, latitude
+                    x_min, y_min = longitude - 0.5, latitude - 0.5
+                    x_max, y_max = longitude + 0.5, latitude + 0.5
                     self.rtree_index.insert(item_id, (x_min, y_min, x_max, y_max))
                     
                     self.circle_data.append({"center": (longitude, latitude), "radius": 0.5})
