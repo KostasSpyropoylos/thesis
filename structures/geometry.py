@@ -6,7 +6,7 @@ class Geometry:
         self.y = y
         Geometry.all.append(self)
 
-    def getGeometry(self):
+    def get_geometry(self):
         return self.x, self.y
 
     def __repr__(self) -> str:

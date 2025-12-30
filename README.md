@@ -102,7 +102,7 @@ if analyzer.load_data_from_csv("path/to/points.csv"):
     print(f"Total overlap: {overlap}")
     analyzer.visualize()
     # Example intersection query
-    ids = analyzer.query_intersection((xmin, ymin, xmax, ymax))
+    ids = analyzer.query_intersection((x_min, y_min, x_max, y_max))
     print(f"Intersecting IDs: {ids}")
 ```
 

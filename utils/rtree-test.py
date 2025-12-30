@@ -8,8 +8,8 @@ import pandas as pd # Import pandas
 def read_data_from_csv(file_path):
     """
     Reads normLatitude and normLongitude from a CSV file and converts them
-    into a format suitable for R-tree (xmin, ymin, xmax, ymax).
-    For points, xmin = xmax and ymin = ymax.
+    into a format suitable for R-tree (x_min, y_min, x_max, y_max).
+    For points, x_min = x_max and y_min = y_max.
     """
     try:
         df = pd.read_csv(file_path)
@@ -24,9 +24,9 @@ def read_data_from_csv(file_path):
             longitude = row['normLongitude']
             # For a point, the MBR is a degenerate rectangle where min = max
             # Using longitude as X and latitude as Y for typical mapping conventions
-            xmin, ymin = longitude, latitude
-            xmax, ymax = longitude, latitude
-            data.append((i, (xmin, ymin, xmax, ymax)))
+            x_min, y_min = longitude, latitude
+            x_max, y_max = longitude, latitude
+            data.append((i, (x_min, y_min, x_max, y_max)))
         return data
     except FileNotFoundError:
         print(f"Error: The file '{file_path}' was not found.")
@@ -53,11 +53,11 @@ def calculate_circle_data(leaf_mbrs):
     """
     circle_data = []
     for mbr_coords in leaf_mbrs:
-        xmin, ymin, xmax, ymax = mbr_coords
-        center_x = (xmin + xmax) / 2
-        center_y = (ymin + ymax) / 2
-        width = xmax - xmin
-        height = ymax - ymin
+        x_min, y_min, x_max, y_max = mbr_coords
+        center_x = (x_min + x_max) / 2
+        center_y = (y_min + y_max) / 2
+        width = x_max - x_min
+        height = y_max - y_min
         
         # For points, width and height will be 0. We need a visible radius.
         radius = min(width, height) / 2

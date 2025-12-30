@@ -3,28 +3,28 @@ from math import sqrt, acos, floor, sin
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from cell import Cell
-from geometry import Geometry
+from structures.cell import Cell
+from structures.geometry import Geometry
 
 
 class Grid:
     def __init__(self, xmin, ymin, xmax, ymax, m):
-        self.xmin = xmin
-        self.ymin = ymin
-        self.xmax = xmax
-        self.ymax = ymax
+        self.x_min = xmin
+        self.y_min = ymin
+        self.x_max = xmax
+        self.y_max = ymax
         self.m = m
-        self.deltax = (self.xmax - self.xmin) / m
-        self.deltay = (self.ymax - self.ymin) / m
+        self.delta_x = (self.x_max - self.x_min) / m
+        self.delta_y = (self.y_max - self.y_min) / m
 
         # Initialize grid with empty cells
         self.cells = [
             [
                 Cell(
-                    xmin=self.xmin + i * self.deltax,
-                    xmax=self.xmin + (i + 1) * self.deltax,
-                    ymin=self.ymin + j * self.deltay,
-                    ymax=self.ymin + (j + 1) * self.deltay,
+                    x_min=self.x_min + i * self.delta_x,
+                    x_max=self.x_min + (i + 1) * self.delta_x,
+                    y_min=self.y_min + j * self.delta_y,
+                    y_max=self.y_min + (j + 1) * self.delta_y,
                 )
                 for j in range(m)
             ]
@@ -32,13 +32,13 @@ class Grid:
         ]
 
         # Centroids and radius storage
-        self.centroids = [[cell.getCentroid() for cell in row] for row in self.cells]
+        self.centroids = [[cell.get_centroid() for cell in row] for row in self.cells]
         self.cell_radius = [[0 for _ in range(m)] for _ in range(m)]
 
-    def findCell(self, x: float, y: float):
+    def find_cell(self, x: float, y: float):
         """Find the appropriate cell for a given (x, y) coordinate."""
-        i = min(max(int((x - self.xmin) / self.deltax), 0), self.m - 1)
-        j = min(max(int((y - self.ymin) / self.deltay), 0), self.m - 1)
+        i = min(max(int((x - self.x_min) / self.delta_x), 0), self.m - 1)
+        j = min(max(int((y - self.y_min) / self.delta_y), 0), self.m - 1)
         return self.cells[i][j]
 
     def fit(self, data: tuple):
@@ -50,36 +50,36 @@ class Grid:
         """
         for x, y in data:
             geom = Geometry(x, y)
-            cell: Cell = self.findCell(x, y)
+            cell: Cell = self.find_cell(x, y)
             cell.add(geom)
 
         # Compute centroids and update radius
-        self.getRadius()
+        self.get_radius()
 
-    def getRadius(self):
+    def get_radius(self):
         """Updates the radius for each cell"""
         for i in range(self.m):
             for j in range(self.m):
                 cell = self.cells[i][j]
-                points = cell.getGeometry()
+                points = cell.get_geometry()
 
                 if points:
                     self.cell_radius[i][j] = max(
-                        self.getDistance(p, self.centroids[i][j]) for p in points
+                        self.get_distance(p, self.centroids[i][j]) for p in points
                     )
                 else:
                     self.cell_radius[i][j] = 0
 
-    def getDistance(self, geom, centroid):
+    def get_distance(self, geom, centroid):
         """Compute Euclidean distance between a geometry and a centroid"""
         return math.sqrt((centroid[0] - geom.x) ** 2 + (centroid[1] - geom.y) ** 2)
 
-    def getGeometries(self):
+    def get_geometries(self):
         """Return all geometries as separate lists of latitudes and longitudes"""
         longs, lats = zip(*[(geom.x, geom.y) for geom in Geometry.all])
         return list(longs), list(lats)
 
-    def findOverlappingClusters(self):
+    def find_overlapping_clusters(self):
         """Finds all overlapping clusters based on centroid distance and radius."""
         overlapping_clusters = []
 
@@ -179,10 +179,10 @@ class Grid:
     def visualize_grid(self, show_points=True, show_centroids=True, show_radii=True):
         """
         Visualizes the Grid, including cells, points, centroids, and cluster radii.
-        Note: The 'Grid' class does not have an explicit `findOverlappingClusters`
+        Note: The 'Grid' class does not have an explicit `find_overlapping_clusters`
         method that prints overlaps during iteration like DensityGrid does.
         If overlap visualization is desired, you'd need to call
-        `findOverlappingClusters` and then iterate over its results.
+        `find_overlapping_clusters` and then iterate over its results.
         """
         fig, ax = plt.subplots(figsize=(10, 10))
 
@@ -191,9 +191,9 @@ class Grid:
             for j in range(self.m):
                 cell = self.cells[i][j]
                 rect = plt.Rectangle(
-                    (cell.xmin, cell.ymin),
-                    self.deltax,
-                    self.deltay,
+                    (cell.x_min, cell.y_min),
+                    self.delta_x,
+                    self.delta_y,
                     facecolor="none",
                     edgecolor="gray",
                     linestyle="--",
@@ -206,7 +206,7 @@ class Grid:
             all_x, all_y = [], []
             for i in range(self.m):
                 for j in range(self.m):
-                    for geom in self.cells[i][j].getGeometry():
+                    for geom in self.cells[i][j].get_geometry():
                         all_x.append(geom.x)
                         all_y.append(geom.y)
             if all_x and all_y:
@@ -244,8 +244,8 @@ class Grid:
                 zorder=3,
             )
 
-        ax.set_xlim(self.xmin, self.xmax)
-        ax.set_ylim(self.ymin, self.ymax)
+        ax.set_xlim(self.x_min, self.x_max)
+        ax.set_ylim(self.y_min, self.y_max)
         ax.set_aspect("equal", adjustable="box")
         ax.set_title("Grid Visualization")
         ax.set_xlabel("X-coordinate")
@@ -256,6 +256,23 @@ class Grid:
         plt.grid(True, linestyle=":", alpha=0.6)
         plt.show()
 
+    def get_cluster_list(self):
+        """
+        Returns a list of clusters in the format (Centroid, Radius).
+        Format: [(K1, r1), (K2, r2), ...] where K is (x, y).
+        """
+        cluster_list = []
+        
+        for i in range(self.m):
+            for j in range(self.m):
+                radius = self.cell_radius[i][j]
+                
+                # We only include cells that contain data points (radius > 0)
+                if radius > 0:
+                    centroid = tuple(self.centroids[i][j])
+                    cluster_list.append((centroid, radius))
+                    
+        return cluster_list
 
 if __name__ == "__main__" :
     csv_data = pd.read_csv("datasets/skewed_coords.csv")
@@ -279,7 +296,7 @@ if __name__ == "__main__" :
     # initiate KMEANS
     kmeans_data = csv_data[["latitude", "longitude"]].to_numpy()
     grid = Grid(
-        xmin=minLongtitude, ymin=minLatitude, xmax=maxLongitude, ymax=maxLatitude, m=20
+        x_min=minLongtitude, y_min=minLatitude, x_max=maxLongitude, y_max=maxLatitude, m=20
     )
     # assign points to grid
     grid.fit(zip(csv_data["longitude"], csv_data["latitude"]))

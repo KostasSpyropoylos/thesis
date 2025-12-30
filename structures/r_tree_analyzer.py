@@ -32,9 +32,9 @@ class RTreeSpatialAnalyzer:
                 latitudes = chunk[latitude_col].to_numpy()
                 longitudes = chunk[longitude_col].to_numpy()
                 for latitude, longitude in zip(latitudes, longitudes):
-                    xmin, ymin = longitude, latitude
-                    xmax, ymax = longitude, latitude
-                    self.rtree_index.insert(item_id, (xmin, ymin, xmax, ymax))
+                    x_min, y_min = longitude, latitude
+                    x_max, y_max = longitude, latitude
+                    self.rtree_index.insert(item_id, (x_min, y_min, x_max, y_max))
                     
                     self.circle_data.append({"center": (longitude, latitude), "radius": 0.5})
                     item_id += 1
@@ -138,7 +138,7 @@ class RTreeSpatialAnalyzer:
         """
         Performs an intersection query on the R-tree.
         Args:
-            query_box (tuple): (xmin, ymin, xmax, ymax)
+            query_box (tuple): (x_min, y_min, x_max, y_max)
         Returns:
             list: IDs of items whose MBRs intersect with the query_box.
         """

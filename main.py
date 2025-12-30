@@ -21,15 +21,15 @@ def plot(grid):
     for i in range(grid.m):
         for j in range(grid.m):
             cell = grid.cells[i][j]
-            geoms = grid.cells[i][j].getGeometry()
+            geoms = grid.cells[i][j].get_geometry()
 
             arr = [(geom.x, geom.y) for geom in geoms]
 
             ax.set_aspect("equal")
             rect = patches.Rectangle(
-                (cell.xmin, cell.ymin),  # Bottom left corner
-                grid.deltax,  # Width
-                grid.deltay,  # Height
+                (cell.x_min, cell.y_min),  # Bottom left corner
+                grid.delta_x,  # Width
+                grid.delta_y,  # Height
                 edgecolor="blue",
                 facecolor="none",
             )

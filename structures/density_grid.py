@@ -7,23 +7,23 @@ from cell import Cell
 from geometry import Geometry
 
 class DensityGrid:
-    def __init__(self, xmin, ymin, xmax, ymax, m):
-        self.xmin = xmin
-        self.ymin = ymin
-        self.xmax = xmax
-        self.ymax = ymax
+    def __init__(self, x_min, y_min, x_max, y_max, m):
+        self.x_min = x_min
+        self.y_min = y_min
+        self.x_max = x_max
+        self.y_max = y_max
         self.m = m
-        self.deltax = (self.xmax - self.xmin) / m
-        self.deltay = (self.ymax - self.ymin) / m
+        self.delta_x = (self.x_max - self.x_min) / m
+        self.delta_y = (self.y_max - self.y_min) / m
 
         # Initialize grid with empty cells
         self.cells = [
             [
                 Cell(
-                    xmin=self.xmin + i * self.deltax,
-                    xmax=self.xmin + (i + 1) * self.deltax,
-                    ymin=self.ymin + j * self.deltay,
-                    ymax=self.ymin + (j + 1) * self.deltay,
+                    x_min=self.x_min + i * self.delta_x,
+                    x_max=self.x_min + (i + 1) * self.delta_x,
+                    y_min=self.y_min + j * self.delta_y,
+                    y_max=self.y_min + (j + 1) * self.delta_y,
                 )
                 for j in range(m)
             ]
@@ -31,20 +31,20 @@ class DensityGrid:
         ]
 
         # Centroids and radius storage
-        self.centroids = [[cell.getCentroid() for cell in row] for row in self.cells]
+        self.centroids = [[cell.get_centroid() for cell in row] for row in self.cells]
         self.cell_radius = [[0 for _ in range(m)] for _ in range(m)]
 
-    def findCell(self, x, y):
+    def find_cell(self, x, y):
         """Find the appropriate cell for a given (x, y) coordinate."""
-        i = min(max(int((x - self.xmin) / self.deltax), 0), self.m - 1)
-        j = min(max(int((y - self.ymin) / self.deltay), 0), self.m - 1)
+        i = min(max(int((x - self.x_min) / self.delta_x), 0), self.m - 1)
+        j = min(max(int((y - self.y_min) / self.delta_y), 0), self.m - 1)
         return self.cells[i][j], i, j
 
     def fit(self, data):
         """Assign points to their respective grid cells and update centroids and radius"""
         for x, y in data:
             geom = Geometry(x, y)
-            cell, i, j = self.findCell(x, y)
+            cell, i, j = self.find_cell(x, y)
             cell.add(geom)
 
         # Compute centroids and update radius
@@ -55,7 +55,7 @@ class DensityGrid:
         for i in range(self.m):
             for j in range(self.m):
                 cell = self.cells[i][j]
-                points = cell.getGeometry()
+                points = cell.get_geometry()
 
                 if points:
                     centroid = self.computeCentroid(points)
@@ -204,9 +204,9 @@ class DensityGrid:
             for j in range(self.m):
                 cell = self.cells[i][j]
                 rect = plt.Rectangle(
-                    (cell.xmin, cell.ymin),
-                    self.deltax,
-                    self.deltay,
+                    (cell.x_min, cell.y_min),
+                    self.delta_x,
+                    self.delta_y,
                     facecolor="none",
                     edgecolor="gray",
                     linestyle="--",
@@ -219,7 +219,7 @@ class DensityGrid:
             all_x, all_y = [], []
             for i in range(self.m):
                 for j in range(self.m):
-                    for geom in self.cells[i][j].getGeometry():
+                    for geom in self.cells[i][j].get_geometry():
                         all_x.append(geom.x)
                         all_y.append(geom.y)
             if all_x and all_y:
@@ -285,8 +285,8 @@ class DensityGrid:
                     ),
                 )
 
-        ax.set_xlim(self.xmin, self.xmax)
-        ax.set_ylim(self.ymin, self.ymax)
+        ax.set_xlim(self.x_min, self.x_max)
+        ax.set_ylim(self.y_min, self.y_max)
         ax.set_aspect("equal", adjustable="box")
         ax.set_title("DensityGrid Visualization")
         ax.set_xlabel("X-coordinate")
