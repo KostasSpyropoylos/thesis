@@ -4,6 +4,9 @@ from sklearn.cluster import KMeans
 from scipy.spatial.distance import euclidean
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+
 
 def compute_cluster_radii(X, labels, centers):
     """
@@ -107,3 +110,35 @@ def evaluate_kmeans_overlap(X, n_clusters):
     radii = compute_cluster_radii(X, labels, centers)
 
     return compute_total_overlap(centers, radii), labels, centers, radii
+
+def visualize(X, labels, centers, radii, overlap_score):
+    """
+    Visualizes points, centroids, and the calculated radii circles.
+    """
+    fig, ax = plt.subplots(figsize=(10, 8))
+    
+    # 1. Plot Data Points
+    scatter = ax.scatter(X[:, 0], X[:, 1], c=labels, cmap='viridis', s=30, alpha=0.6, label='Data Points')
+    
+    # 2. Plot Centroids
+    ax.scatter(centers[:, 0], centers[:, 1], c='red', marker='x', s=100, linewidths=3, zorder=10, label='Centroids')
+    
+    # 3. Plot Cluster Circles (Radii)
+    for center, radius in zip(centers, radii):
+        circle = patches.Circle(
+            center, 
+            radius, 
+            facecolor='none', 
+            edgecolor='red', 
+            linestyle='--', 
+            linewidth=1.5,
+            alpha=0.8
+        )
+        ax.add_patch(circle)
+        
+    ax.set_title(f"K-Means Clustering (k={len(centers)})\nTotal Overlap Area: {overlap_score:.4f}")
+    ax.set_aspect('equal')
+    ax.legend()
+    plt.grid(True, linestyle=':', alpha=0.6)
+    fig.savefig("kmeans_set_1.png", dpi=300, bbox_inches="tight")
+    plt.show()

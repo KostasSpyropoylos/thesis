@@ -6,3 +6,6 @@ yelp_academic_dataset_user.json
 __pycache__/
 *.py[cod]
 *$py.class
+*.csv
+*.png
+*.patch
