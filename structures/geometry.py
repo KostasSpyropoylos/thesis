@@ -12,3 +12,7 @@ class Geometry:
     def __repr__(self) -> str:
         return f"Geometry(x={self.x}, y={self.y})"
 
+    @classmethod
+    def clear_all(cls):
+        cls.all = []
+

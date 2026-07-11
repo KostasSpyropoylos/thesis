@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from structures.cell import Cell
 from structures.geometry import Geometry
-
+from sklearn.cluster import AgglomerativeClustering
 
 class Grid:
     def __init__(self, xmin, ymin, xmax, ymax, m):
@@ -113,70 +113,124 @@ class Grid:
 
         return overlapping_clusters
 
+    def enforce_k_groups(self, k: int):
+        """
+        Enforce exactly k groups by hierarchically merging grid cells.
+        This ensures a fair comparison with K-Means.
+        """
+        
+        valid_centroids = []
+        valid_points = []
+        
+        for i in range(self.m):
+            for j in range(self.m):
+                pts = self.cells[i][j].get_geometry()
+                if pts:
+                    valid_centroids.append(self.centroids[i][j])
+                    valid_points.append(pts)
+                    
+        if len(valid_centroids) <= k:
+            self.final_centroids = valid_centroids
+            self.final_radii = []
+            for idx, pts in enumerate(valid_points):
+                r = max(self.get_distance(p, valid_centroids[idx]) for p in pts) if pts else 0
+                self.final_radii.append(r)
+            return
+
+        clustering = AgglomerativeClustering(n_clusters=k, linkage='average')
+        labels = clustering.fit_predict(valid_centroids)
+
+        self.final_centroids = []
+        self.final_radii = []
+
+        for group_idx in range(k):
+            group_points = []
+            for idx, label in enumerate(labels):
+                if label == group_idx:
+                    group_points.extend(valid_points[idx])
+            
+            if not group_points:
+                continue
+
+            cx = sum(p.x for p in group_points) / len(group_points)
+            cy = sum(p.y for p in group_points) / len(group_points)
+            new_centroid = (cx, cy)
+            
+            r = max(self.get_distance(p, new_centroid) for p in group_points)
+            
+            self.final_centroids.append(new_centroid)
+            self.final_radii.append(r)
+
     def compute_grid_overlap(self):
         """
         Compute total overlap metric.
-        Optimized from O(M^4) to O(M^2) by considering each pair once.
         """
         total_overlap = 0.0
         PI = math.pi
 
-        # Iterate through each unique pair of circles
-        for i in range(self.m):
-            for j in range(self.m):
-                centroid1 = self.centroids[i][j]
-                r1 = self.cell_radius[i][j]
+        if hasattr(self, 'final_centroids') and self.final_centroids:
+            centers = self.final_centroids
+            radii = self.final_radii
+        else:
+            centers = []
+            radii = []
+            for i in range(self.m):
+                for j in range(self.m):
+                    if self.cell_radius[i][j] > 0:
+                        centers.append(self.centroids[i][j])
+                        radii.append(self.cell_radius[i][j])
 
-                if r1 == 0:
-                    continue
+        n = len(centers)
+        for i in range(n):
+            centroid1 = centers[i]
+            r1 = radii[i]
 
-                for k in range(i, self.m):
-                    for l in range(self.m):
-                        if k == i and l <= j:
-                            continue
+            if r1 == 0:
+                continue
 
-                        centroid2 = self.centroids[k][l]
-                        r2 = self.cell_radius[k][l]
+            for j in range(i + 1, n):
+                centroid2 = centers[j]
+                r2 = radii[j]
 
-                        if r2 == 0:
-                            continue
+            if r2 == 0:
+                continue
 
-                        distance = math.sqrt(
-                            (centroid2[0] - centroid1[0]) ** 2
-                            + (centroid2[1] - centroid1[1]) ** 2
+            distance = math.sqrt(
+                (centroid2[0] - centroid1[0]) ** 2
+                + (centroid2[1] - centroid1[1]) ** 2
+            )
+
+            # Case 1: Circles do not overlap
+            if distance >= (r1 + r2):
+                continue
+
+            # Case 2: One circle is completely contained within the other
+            if distance <= abs(r1 - r2):
+                total_overlap += math.pi * min(r1, r2) ** 2
+                continue
+            # Case 3: Circles partially overlap
+
+            arg1 = (distance**2 + r1**2 - r2**2) / (2 * distance * r1)
+            arg2 = (distance**2 + r2**2 - r1**2) / (2 * distance * r2)
+
+            arg1 = max(-1.0, min(1.0, arg1))
+            arg2 = max(-1.0, min(1.0, arg2))
+
+            part1 = r1**2 * math.acos(arg1)
+            part2 = r2**2 * math.acos(arg2)
+
+            part3 = 0.5 * math.sqrt(
+                (-distance + r1 + r2)
+                * (distance + r1 - r2)
+                * (distance - r1 + r2)
+                * (distance + r1 + r2)
                         )
 
-                        # Case 1: Circles do not overlap
-                        if distance >= (r1 + r2):
-                            continue
-
-                        # Case 2: One circle is completely contained within the other
-                        if distance <= abs(r1 - r2):
-                            total_overlap += PI * min(r1, r2) ** 2
-                            continue
-                        # Case 3: Circles partially overlap
-                        
-                        arg1 = (distance**2 + r1**2 - r2**2) / (2 * distance * r1)
-                        arg2 = (distance**2 + r2**2 - r1**2) / (2 * distance * r2)
-
-                        arg1 = max(-1.0, min(1.0, arg1))
-                        arg2 = max(-1.0, min(1.0, arg2))
-
-                        part1 = r1**2 * math.acos(arg1)
-                        part2 = r2**2 * math.acos(arg2)
-
-                        part3 = 0.5 * math.sqrt(
-                            (-distance + r1 + r2)
-                            * (distance + r1 - r2)
-                            * (distance - r1 + r2)
-                            * (distance + r1 + r2)
-                        )
-
-                        total_overlap += part1 + part2 - part3
+            total_overlap += part1 + part2 - part3
 
         return total_overlap
 
-    def visualize_grid(self, show_points=True, show_centroids=True, show_radii=True):
+    def visualize_grid(self, show_points=True, show_centroids=False, show_radii=True):
         """
         Visualizes the Grid, including cells, points, centroids, and cluster radii.
         Note: The 'Grid' class does not have an explicit `find_overlapping_clusters`
@@ -254,28 +308,36 @@ class Grid:
         by_label = dict(zip(labels, handles))
         ax.legend(by_label.values(), by_label.keys())
         plt.grid(True, linestyle=":", alpha=0.6)
+        fig.savefig("grid_set_1.png", dpi=300, bbox_inches="tight")
         plt.show()
 
-    def get_cluster_list(self):
+    def get_clusters(self):
         """
-        Returns a list of clusters in the format (Centroid, Radius).
-        Format: [(K1, r1), (K2, r2), ...] where K is (x, y).
+        Returns a list of formatted cluster strings.
+        Format: ["C1(K=[x, y], r=radius)", "C2(...)", ...]
         """
         cluster_list = []
-        
+        cluster_count = 1
+
         for i in range(self.m):
             for j in range(self.m):
-                radius = self.cell_radius[i][j]
-                
-                # We only include cells that contain data points (radius > 0)
-                if radius > 0:
-                    centroid = tuple(self.centroids[i][j])
-                    cluster_list.append((centroid, radius))
-                    
+                # Check if cell has points (is a valid cluster)
+                points = self.cells[i][j].get_geometry()
+
+                if points:
+                    centroid = self.centroids[i][j]
+                    radius = self.cell_radius[i][j]
+
+                    cluster_str = f"C{cluster_count}(K={centroid}, r={radius:.2f})"
+                    cluster_list.append(cluster_str)
+
+                    cluster_count += 1
+
         return cluster_list
 
-if __name__ == "__main__" :
-    csv_data = pd.read_csv("datasets/skewed_coords.csv")
+
+if __name__ == "__main__":
+    csv_data = pd.read_csv("datasets/skewed_coords_1.csv")
     # latitudes = csv_data["latitude"]
     # longitudes = csv_data["longitude"]
     latitudes = csv_data["latitude"]
@@ -296,9 +358,13 @@ if __name__ == "__main__" :
     # initiate KMEANS
     kmeans_data = csv_data[["latitude", "longitude"]].to_numpy()
     grid = Grid(
-        x_min=minLongtitude, y_min=minLatitude, x_max=maxLongitude, y_max=maxLatitude, m=20
+        xmin=minLongtitude,
+        ymin=minLatitude,
+        xmax=maxLongitude,
+        ymax=maxLatitude,
+        m=20,
     )
     # assign points to grid
     grid.fit(zip(csv_data["longitude"], csv_data["latitude"]))
-        
+
     print(f"Grid Score: {grid.compute_grid_overlap()}")
